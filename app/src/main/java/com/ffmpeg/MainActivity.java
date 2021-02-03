@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 Toast.makeText(MainActivity.this, "FFmpeg解码器准备成功了，可以开始播放了", Toast.LENGTH_SHORT).show();
+                dnPlayer.start();
             }
         });
     }

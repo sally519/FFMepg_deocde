@@ -3,7 +3,7 @@
 #include <queue>
 #include <pthread.h>
 #include <android/log.h>
-#include "safe_queue.h"
+#include "SafeQueue.h"
 #include "DNFFmpeg.h"
 
 //__VA_ARGS__代表...这个可变参数
@@ -57,4 +57,8 @@ Java_com_ffmpeg_DNPlayer_native_1prepare(JNIEnv *env, jobject thiz, jstring data
     ffmpeg->prepare();
 
     env->ReleaseStringChars(data_source, reinterpret_cast<const jchar *>(dataSource));
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_ffmpeg_DNPlayer_native_1start(JNIEnv *env, jobject thiz) {
+    ffmpeg->start();
 }

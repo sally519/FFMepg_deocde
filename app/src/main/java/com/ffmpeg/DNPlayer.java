@@ -14,6 +14,9 @@ public class DNPlayer implements SurfaceHolder.Callback {
         System.loadLibrary("native-lib");
     }
 
+    public native void native_prepare(String dataSource);
+    public native void native_start();
+
     public interface onFFmpegInitErrorBack{
         void onFFmpegInitError(int ret);
     }
@@ -34,8 +37,8 @@ public class DNPlayer implements SurfaceHolder.Callback {
     /**
      * 开始播放
      * */
-    public void start(String dataSource){
-
+    public void start(){
+        native_start();
     }
 
     /**
@@ -96,8 +99,6 @@ public class DNPlayer implements SurfaceHolder.Callback {
             this.onFFmpegInitErrorBack.onFFmpegInitError(errorCode);
         }
     }
-
-    public native void native_prepare(String dataSource);
 
     public void setOnFFmpegInitErrorBack(DNPlayer.onFFmpegInitErrorBack onFFmpegInitErrorBack) {
         this.onFFmpegInitErrorBack = onFFmpegInitErrorBack;

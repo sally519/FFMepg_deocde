@@ -20,15 +20,18 @@ class DNFFmpeg {
 
     void prepare();
     void _prepare();
+    void start();
+    void _start();
 
 private:
         char * dataSource;
-        pthread_t pid;
+        pthread_t pid_prepare;
+        pthread_t pid_play;
         AVFormatContext * avFormatContext;
         JavaCallHelper* javaCallHelper;
-        AudioChannel * audioChannel;
-        VideoChannel * videoChannel;
+        AudioChannel * audioChannel=0;
+        VideoChannel * videoChannel=0;
+        bool isPlaying;
 };
-
 
 #endif //FIEST_FFMPEG_DNFFMPEG_H
