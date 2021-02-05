@@ -6,9 +6,11 @@
 #include "DNFFmpeg.h"
 #include "macro.h"
 #include <pthread.h>
+#include <android/log.h>
 extern "C"{
 #include <libavformat/avformat.h>
 }
+#define LOG(...) __android_log_print(ANDROID_LOG_ERROR,"zsq",__VA_ARGS__);
 
 //线程要执行的方法
 void * task_prepare(void * args){
@@ -28,6 +30,7 @@ DNFFmpeg::DNFFmpeg(JavaCallHelper* javaCallHelper,const char *dataSource){
     //防止dataSource指向的内存被释放
     this->dataSource=new char[strlen(dataSource)+1];
     strcpy(this->dataSource,dataSource);
+    LOG("播放链接%s", this->dataSource);
 }
 
 DNFFmpeg::~DNFFmpeg() {
@@ -80,8 +83,8 @@ void DNFFmpeg::_prepare() {
          /**
           * 2.获得解码器上下文
           * */
-        AVCodecContext* context=avcodec_alloc_context3(dec);
-        if(NULL==context){
+        AVCodecContext* codecContext=avcodec_alloc_context3(dec);
+        if(NULL == codecContext){
             LOGE("FFMPEG_ALLOC_CODEC_CONTEXT_FAIL");
             this->javaCallHelper->onError(THREAD_CHILD,FFMPEG_ALLOC_CODEC_CONTEXT_FAIL);
             return;
@@ -90,7 +93,7 @@ void DNFFmpeg::_prepare() {
         /**
           * 3.设置上下文内的一些参数
           * */
-         ret= avcodec_parameters_to_context(context,codecParameters);
+         ret= avcodec_parameters_to_context(codecContext, codecParameters);
          if(ret<0){
              LOGE("FFMPEG_CODEC_CONTEXT_PARAMETERS_FAIL");
              this->javaCallHelper->onError(THREAD_CHILD,FFMPEG_CODEC_CONTEXT_PARAMETERS_FAIL);
@@ -100,7 +103,7 @@ void DNFFmpeg::_prepare() {
         /**
          * 4.打开编码器
          * */
-         ret=avcodec_open2(context,dec,0);
+         ret=avcodec_open2(codecContext, dec, 0);
          if(ret!=0){
              LOGE("FFMPEG_OPEN_DECODER_FAIL");
              this->javaCallHelper->onError(THREAD_CHILD,FFMPEG_OPEN_DECODER_FAIL);
@@ -109,9 +112,10 @@ void DNFFmpeg::_prepare() {
 
         //音频
         if(codecParameters->codec_type==AVMEDIA_TYPE_VIDEO){
-            videoChannel=new VideoChannel(i);
+            videoChannel=new VideoChannel(i,codecContext);
+            videoChannel->setRenderFrameCallback(renderFrameCallback);
         } else if(codecParameters->codec_type==AVMEDIA_TYPE_AUDIO){
-            audioChannel=new AudioChannel(i);
+            audioChannel=new AudioChannel(i,codecContext);
         }
     }
 
@@ -130,6 +134,10 @@ void DNFFmpeg::_prepare() {
 void DNFFmpeg::start() {
     //正在播放
     isPlaying= 1;
+    if(videoChannel){
+        videoChannel->packets.working();
+        videoChannel->play();
+    }
     pthread_create(&pid_play,0,play, this);
 }
 
@@ -146,7 +154,6 @@ void DNFFmpeg::_start() {
          ret=av_read_frame(avFormatContext,packet);
          if (ret==0){//0表示成功 其他失败
              if(audioChannel&&packet->stream_index==audioChannel->id){
-
              } else if (videoChannel&&packet->stream_index==videoChannel->id){
                  videoChannel->packets.push(packet);
              }
@@ -159,5 +166,8 @@ void DNFFmpeg::_start() {
     /**
      * 2.解码
      * */
+}
 
+void DNFFmpeg::setRenderDataCallback(RenderFrameCallback renderFrameCallback) {
+    this->renderFrameCallback=renderFrameCallback;
 }

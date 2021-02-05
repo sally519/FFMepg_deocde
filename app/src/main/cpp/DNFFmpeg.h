@@ -22,7 +22,7 @@ class DNFFmpeg {
     void _prepare();
     void start();
     void _start();
-
+    void setRenderDataCallback(RenderFrameCallback renderFrameCallback);
 private:
         char * dataSource;
         pthread_t pid_prepare;
@@ -31,6 +31,7 @@ private:
         JavaCallHelper* javaCallHelper;
         AudioChannel * audioChannel=0;
         VideoChannel * videoChannel=0;
+        RenderFrameCallback renderFrameCallback;
         bool isPlaying;
 };
 

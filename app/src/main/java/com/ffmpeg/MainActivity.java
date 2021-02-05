@@ -12,7 +12,7 @@ import android.widget.Toast;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, DNPlayer.onFFmpegInitErrorBack, DNPlayer.onPrepareOk {
 
     private DNPlayer dnPlayer;
-    private String dataSource="rtmp://58.200.131.2:1935/livetv/cctv1";
+    private String dataSource="http://ivi.bupt.edu.cn/hls/cctv6hd.m3u8";
     private SurfaceView video_surface;
     private Button start_btn;
     private Button stop_btn;
@@ -25,13 +25,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         video_surface=findViewById(R.id.video_surface);
         start_btn=findViewById(R.id.start_btn);
         stop_btn=findViewById(R.id.stop_btn);
+        start_btn.setOnClickListener(this);
+        stop_btn.setOnClickListener(this);
 
         dnPlayer=new DNPlayer();
         dnPlayer.setSurfaceView(video_surface);
         dnPlayer.setDataSource(dataSource);
         dnPlayer.setOnFFmpegInitErrorBack(this);
         dnPlayer.setOnPrepareOk(this);
-        dnPlayer.prepare();
     }
 
     @Override
@@ -47,22 +48,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onFFmpegInitError(int ret) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(MainActivity.this, "初始化失败，对应错误码："+ ret, Toast.LENGTH_SHORT).show();
-            }
-        });
+        runOnUiThread(() -> Toast.makeText(MainActivity.this, "初始化失败，对应错误码："+ ret, Toast.LENGTH_SHORT).show());
     }
 
     @Override
     public void onOk() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(MainActivity.this, "FFmpeg解码器准备成功了，可以开始播放了", Toast.LENGTH_SHORT).show();
-                dnPlayer.start();
-            }
+        runOnUiThread(() -> {
+            Toast.makeText(MainActivity.this, "FFmpeg解码器准备成功了，可以开始播放了", Toast.LENGTH_SHORT).show();
+            dnPlayer.start();
         });
     }
 }

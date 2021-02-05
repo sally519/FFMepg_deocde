@@ -4,6 +4,9 @@
 
 #include <queue>
 #include <pthread.h>
+#include <android/log.h>
+
+#define LOG(...) __android_log_print(ANDROID_LOG_ERROR,"zsq",__VA_ARGS__);
 
 using namespace std;
 template <typename T>
@@ -20,10 +23,11 @@ public:
     }
 
     int push(T value){
+        pthread_mutex_lock(&mutex);
         if (isWord!=1){
+            LOG("队列存储被暂停了");
             return 404;
         }
-        pthread_mutex_lock(&mutex);
         q.push(value);
         //通知 有了新数据到达
         pthread_cond_signal(&cond);
@@ -32,12 +36,12 @@ public:
     }
 
     int pop(T& value){
+        pthread_mutex_lock(&mutex);
         if (isWord!=1){
             return 404;
         }
         int ret = 0;
-        pthread_mutex_lock(&mutex);
-        while (q.empty()){
+        while (q.size()==0){
             //如果没数据就等待
             pthread_cond_wait(&cond,&mutex);
         }
@@ -69,12 +73,16 @@ public:
         this->releaseCallback = releaseCallback;
     }
 
-    void startWork(){
+    void working(){
         isWord=1;
     };
 
-    void stopWork(){
+    void worked(){
         isWord=0;
+    }
+
+    int getQueueSize(){
+        return q.size();
     }
 private:
     pthread_mutex_t mutex;
