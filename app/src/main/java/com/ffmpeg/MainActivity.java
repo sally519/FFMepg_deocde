@@ -13,6 +13,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private DNPlayer dnPlayer;
     private String dataSource="http://ivi.bupt.edu.cn/hls/cctv6hd.m3u8";
+//    private String dataSource="http://devimages.apple.com.edgekey.net/streaming/examples/bipbop_4x3/gear2/prog_index.m3u8";
     private SurfaceView video_surface;
     private Button start_btn;
     private Button stop_btn;

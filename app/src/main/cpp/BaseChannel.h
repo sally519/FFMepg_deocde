@@ -43,6 +43,7 @@ public:
 
     int id;
     SafeQueue<AVPacket*> packets;
+    SafeQueue<AVFrame*> frames;
     bool isPlaying;
     AVCodecContext* codecContext;
 };

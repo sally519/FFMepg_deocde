@@ -138,6 +138,10 @@ void DNFFmpeg::start() {
         videoChannel->packets.working();
         videoChannel->play();
     }
+    if(audioChannel){
+        audioChannel->packets.working();
+        audioChannel->play();
+    }
     pthread_create(&pid_play,0,play, this);
 }
 
@@ -154,6 +158,7 @@ void DNFFmpeg::_start() {
          ret=av_read_frame(avFormatContext,packet);
          if (ret==0){//0表示成功 其他失败
              if(audioChannel&&packet->stream_index==audioChannel->id){
+                 audioChannel->packets.push(packet);
              } else if (videoChannel&&packet->stream_index==videoChannel->id){
                  videoChannel->packets.push(packet);
              }
