@@ -12,6 +12,7 @@ using namespace std;
 template <typename T>
 class SafeQueue {
     typedef void (*ReleaseCallback)(T*);
+    typedef void (*SyncHandle)(queue<T> &);
 public:
     SafeQueue(){
         pthread_mutex_init(&mutex,0);
@@ -73,6 +74,10 @@ public:
         this->releaseCallback = releaseCallback;
     }
 
+    void setSyncHandle(SyncHandle s) {
+        syncHandle = s;
+    }
+
     void working(){
         isWord=1;
     };
@@ -84,6 +89,13 @@ public:
     int getQueueSize(){
         return q.size();
     }
+
+    void sync() {
+        pthread_mutex_lock(&mutex);
+        //同步代码块 当我们调用sync方法的时候，能够保证是在同步块中操作queue 队列
+        syncHandle(q);
+        pthread_mutex_unlock(&mutex);
+    }
 private:
     pthread_mutex_t mutex;
     pthread_cond_t cond;
@@ -91,4 +103,5 @@ private:
     ReleaseCallback releaseCallback;
     //是否工作的标记 1：工作  0：不接受数据
     int isWord;
+    SyncHandle syncHandle;
 };

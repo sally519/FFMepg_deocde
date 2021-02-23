@@ -6,6 +6,7 @@
 #include <android/log.h>
 extern "C"{
 #include <libavutil/imgutils.h>
+#include <libavutil/time.h>
 }
 #define LOG(...) __android_log_print(ANDROID_LOG_ERROR,"zsq",__VA_ARGS__);
 
@@ -21,8 +22,21 @@ void * render_task(void * args){
     return 0;
 }
 
-VideoChannel::VideoChannel(int id,AVCodecContext* codecContext) :BaseChannel(id,codecContext){
-    frames.setReleaseCallback(releaseAVFrame);
+/**
+ * 丢已经解码的图片
+ * @param q
+ */
+void dropAvFrame(queue<AVFrame *> &q) {
+    if (!q.empty()) {
+        AVFrame *frame = q.front();
+        BaseChannel::releaseAVFrame(&frame);
+        q.pop();
+    }
+}
+
+VideoChannel::VideoChannel(int id,AVCodecContext* codecContext,AVRational time_base,int fps) :BaseChannel(id,codecContext,time_base){
+    frames.setSyncHandle(dropAvFrame);
+    this->fps=fps;
 }
 
 VideoChannel::~VideoChannel() {
@@ -38,47 +52,14 @@ void VideoChannel::play() {
     pthread_create(&pid_render,0,render_task,this);
 }
 
-void VideoChannel::decode() {
-    AVPacket * packet=0;
-    int i=0;
-    while (isPlaying){
-        i++;
-        int i=0;
-        //取出一个数据包
-        int ret=packets.pop(packet);
-        if(!isPlaying){
-            break;
-        }
-        if(ret!=1){
-            continue;
-        }
-        ret=avcodec_send_packet(codecContext,packet);
-        releaseCallback(&packet);
-        if(ret!=0){
-            break;
-        }
-        //代表了一个图像
-        AVFrame * avFrame=av_frame_alloc();
-        //从解码器里读取解码后的数据包
-        ret=avcodec_receive_frame(codecContext,avFrame);
-        if(ret==AVERROR(EAGAIN)){
-            continue;
-        } else if(ret!=0){
-            break;
-        } else{
-            frames.push(avFrame);
-            //再开一个线程播放  保证流畅度  方便影视片同步
-        }
-    }
-    releaseCallback(&packet);
-}
-
 //开始渲染
 void VideoChannel::render() {
     swsContext=sws_getContext(
             codecContext->width,codecContext->height,codecContext->pix_fmt,
             codecContext->width,codecContext->height,AV_PIX_FMT_RGBA,
             SWS_BILINEAR,0,0,0);
+    //每个画面刷新的间隔
+    double frame_delays=1.0/fps*1000000;
     AVFrame * frame=0;
     uint8_t * dst_data[4];//指针数组
     int dst_lines_ize[4];
@@ -98,6 +79,37 @@ void VideoChannel::render() {
                 codecContext->height,
                 dst_data,
                 dst_lines_ize);
+        //获得当前画面播放的相对时间,视频的话一般用best_effort_timestamp，和音频有点区别
+        clock=frame->best_effort_timestamp*av_q2d(time_base);
+        //额外的画面刷新间隔时间
+        double extra_delay=frame->repeat_pict/(2*fps)*1000000;
+        //真实需要的间隔时间
+        double delays=extra_delay+frame_delays;
+        //通过休眠来设置帧率
+        if(!audioChannel){
+            av_usleep(delays);
+        }else{
+            if(clock==0){
+                av_usleep(delays);
+            } else{
+                double audioClock=audioChannel->clock;
+                if(audioClock==0){//第一次audioClock可能为0，音频解码还没有开始，要防止线程陷入长时间沉睡
+                    continue;
+                }
+                //音频相对播放时间-视频相对播放时间
+                double diff_time= 1000000*(clock-audioClock);
+                if(diff_time>0){
+                    av_usleep(delays + diff_time);
+                } else{
+                    if(fabs(diff_time)>=0.05){
+                        //丢帧
+                        frames.sync();
+                        releaseAVFrame(&frame);
+                        continue;
+                    }
+                }
+            }
+        }
         renderFrameCallback(dst_data[0],dst_lines_ize[0],codecContext->width,codecContext->height);
         releaseAVFrame(&frame);
     }
@@ -107,4 +119,8 @@ void VideoChannel::render() {
 
 void VideoChannel::setRenderFrameCallback(RenderFrameCallback renderFrameCallback) {
     this->renderFrameCallback=renderFrameCallback;
+}
+
+void VideoChannel::setAudioChannel(AudioChannel *audioChannel) {
+    this->audioChannel=audioChannel;
 }

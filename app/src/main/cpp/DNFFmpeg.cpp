@@ -109,13 +109,17 @@ void DNFFmpeg::_prepare() {
              this->javaCallHelper->onError(THREAD_CHILD,FFMPEG_OPEN_DECODER_FAIL);
              return;
          }
-
+         //单位
+         AVRational time_base=stream->time_base;
         //音频
         if(codecParameters->codec_type==AVMEDIA_TYPE_VIDEO){
-            videoChannel=new VideoChannel(i,codecContext);
+            //帧率：单位时间内要显示多少个图像
+            AVRational frame_rate=stream->avg_frame_rate;
+            int fps = av_q2d(frame_rate);
+            videoChannel=new VideoChannel(i,codecContext,time_base,fps);
             videoChannel->setRenderFrameCallback(renderFrameCallback);
         } else if(codecParameters->codec_type==AVMEDIA_TYPE_AUDIO){
-            audioChannel=new AudioChannel(i,codecContext);
+            audioChannel=new AudioChannel(i,codecContext,time_base);
         }
     }
 
@@ -134,13 +138,14 @@ void DNFFmpeg::_prepare() {
 void DNFFmpeg::start() {
     //正在播放
     isPlaying= 1;
-    if(videoChannel){
-        videoChannel->packets.working();
-        videoChannel->play();
-    }
     if(audioChannel){
         audioChannel->packets.working();
         audioChannel->play();
+    }
+    if(videoChannel){
+        videoChannel->packets.working();
+        videoChannel->setAudioChannel(audioChannel);
+        videoChannel->play();
     }
     pthread_create(&pid_play,0,play, this);
 }

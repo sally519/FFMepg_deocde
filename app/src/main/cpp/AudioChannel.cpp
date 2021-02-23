@@ -4,7 +4,7 @@
 
 #include "AudioChannel.h"
 
-AudioChannel::AudioChannel(int id,AVCodecContext* codecContext):BaseChannel(id,codecContext) {
+AudioChannel::AudioChannel(int id,AVCodecContext* codecContext,AVRational time_base):BaseChannel(id,codecContext,time_base) {
     //44100*(双声道)*(16位)
     //根据布局获取声道数
     out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
@@ -168,39 +168,7 @@ int AudioChannel::getPcm() {
     //返回真正转换出多少个数据  单位是：44100*2
     int sample=swr_convert(swrContext, &data, max_samples, const_cast<const uint8_t **>(frame->data), frame->nb_samples);
     data_size=sample*out_samplesize*out_channels;
+    //获取frame的一个相对时间
+    clock = frame->pts*av_q2d(time_base);
     return data_size;
-}
-
-void AudioChannel::decode() {
-    AVPacket *packet = 0;
-    while (isPlaying) {
-        //取出一个数据包
-        int ret = packets.pop(packet);
-        if (!isPlaying) {
-            break;
-        }
-        //取出失败
-        if (!ret) {
-            continue;
-        }
-        //把包丢给解码器
-        ret = avcodec_send_packet(codecContext, packet);
-        releaseCallback(&packet);
-        //重试
-        if (ret != 0) {
-            break;
-        }
-        //代表了一个图像 (将这个图像先输出来)
-        AVFrame *frame = av_frame_alloc();
-        //从解码器中读取 解码后的数据包 AVFrame
-        ret = avcodec_receive_frame(codecContext, frame);
-        //需要更多的数据才能够进行解码
-        if (ret == AVERROR(EAGAIN)) {
-            continue;
-            break;
-        }
-        //再开一个        } else if (ret != 0) {线程 来播放 (流畅度)
-        frames.push(frame);
-    }
-    releaseCallback(&packet);
 }

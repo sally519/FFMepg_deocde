@@ -17,12 +17,11 @@ extern  "C"{
 
 class AudioChannel : public BaseChannel{
 public:
-    AudioChannel(int id,AVCodecContext* codecContext);
+    AudioChannel(int id,AVCodecContext* codecContext,AVRational time_base);
     ~AudioChannel();
     void play();
     void _play();
     int getPcm();
-    void decode();
 public:
     uint8_t *data;
 private:
