@@ -182,12 +182,16 @@ void DNFFmpeg::_start() {
      * 1.读取媒体数据包（音视频数据包）
      * */
      while (isPlaying){
+         //通过pause变量控制读包，达到暂停的效果
+         if(pause){
+             continue;
+         }
          //读取的时候读慢一点，防止OOM
-         if(audioChannel&&audioChannel->packets.getQueueSize()>100){
+         if(audioChannel&&audioChannel->packets.getQueueSize()>50){
              av_usleep(1000*10);
              continue;
          }
-         if(videoChannel&&videoChannel->packets.getQueueSize()>100){
+         if(videoChannel&&videoChannel->packets.getQueueSize()>50){
              av_usleep(1000*10);
              continue;
          }
@@ -206,7 +210,7 @@ void DNFFmpeg::_start() {
                  break;
              }
              //如果是做直播，可以sleep
-             //如果支持点播（播放本地稳健），seek后退要重新进入循环
+             //如果支持点播（播放本地文件），seek后退要重新进入循环
          } else{
              break;
          }
@@ -244,4 +248,12 @@ void DNFFmpeg::stop() {
     isPlaying=0;
     javaCallHelper=0;
     pthread_create(&pid_stop,0,stop_play, this);
+}
+
+void DNFFmpeg::pause_video() {
+    this->pause= true;
+}
+
+void DNFFmpeg::continue_video() {
+    this->pause= false;
 }

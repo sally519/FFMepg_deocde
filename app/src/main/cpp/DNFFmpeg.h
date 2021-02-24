@@ -24,6 +24,9 @@ class DNFFmpeg {
     void _start();
     void setRenderDataCallback(RenderFrameCallback renderFrameCallback);
     void stop();
+    void pause_video();
+
+    void continue_video();
 
 public:
     pthread_t pid_prepare;
@@ -37,6 +40,7 @@ private:
         JavaCallHelper* javaCallHelper;
         RenderFrameCallback renderFrameCallback;
         bool isPlaying=1;
+        bool pause= false;
 };
 
 #endif //FIEST_FFMPEG_DNFFMPEG_H

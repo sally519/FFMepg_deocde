@@ -135,3 +135,19 @@ Java_com_ffmpeg_DNPlayer_native_1release(JNIEnv *env, jobject thiz) {
     pthread_mutex_unlock(&mutex);
     LOG("释放了窗口");
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ffmpeg_DNPlayer_native_1pause(JNIEnv *env, jobject thiz) {
+    if(ffmpeg){
+        ffmpeg->pause_video();
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ffmpeg_DNPlayer_continue_1play(JNIEnv *env, jobject thiz) {
+    if(ffmpeg){
+        ffmpeg->continue_video();
+    }
+}

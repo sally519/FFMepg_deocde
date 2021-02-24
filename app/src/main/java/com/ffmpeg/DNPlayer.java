@@ -18,8 +18,14 @@ public class DNPlayer implements SurfaceHolder.Callback {
     public native void native_prepare(String dataSource);
     public native void native_start();
     public native void native_stop();
+    public native void native_pause();
+    public native void continue_play();
     public native void native_release();
     public native void native_setSurface(Surface surface);
+
+    public void continuePlay() {
+        continue_play();
+    }
 
     public interface onFFmpegInitErrorBack{
         void onFFmpegInitError(int ret);
@@ -57,6 +63,13 @@ public class DNPlayer implements SurfaceHolder.Callback {
      * */
     public void stop(){
         native_stop();
+    }
+
+    /**
+     * 暂停播放
+     * */
+    public void pause(){
+        native_pause();
     }
 
     /**

@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, DNPlayer.onFFmpegInitErrorBack, DNPlayer.onPrepareOk {
@@ -17,6 +16,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SurfaceView video_surface;
     private Button start_btn;
     private Button stop_btn;
+    private Button pause_btn;
+    private Button continue_play_btn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,8 +27,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         video_surface=findViewById(R.id.video_surface);
         start_btn=findViewById(R.id.start_btn);
         stop_btn=findViewById(R.id.stop_btn);
+        pause_btn=findViewById(R.id.pause_btn);
+        continue_play_btn=findViewById(R.id.continue_play_btn);
         start_btn.setOnClickListener(this);
         stop_btn.setOnClickListener(this);
+        pause_btn.setOnClickListener(this);
+        continue_play_btn.setOnClickListener(this);
 
         dnPlayer=new DNPlayer();
         dnPlayer.setSurfaceView(video_surface);
@@ -44,6 +49,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.stop_btn:
                 dnPlayer.stop();
+                break;
+            case R.id.pause_btn:
+                dnPlayer.pause();
+                break;
+            case R.id.continue_play_btn:
+                dnPlayer.continuePlay();
                 break;
         }
     }
