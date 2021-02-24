@@ -17,6 +17,12 @@ public:
     virtual ~BaseChannel(){
         packets.setReleaseCallback(releaseCallback);
         packets.clear();
+        frames.clear();
+        if(codecContext){
+            avcodec_close(codecContext);
+            avcodec_free_context(&codecContext);
+            codecContext=0;
+        }
     }
 
     /**
@@ -71,7 +77,6 @@ public:
             //需要更多的数据才能够进行解码
             if (ret == AVERROR(EAGAIN)) {
                 continue;
-                break;
             }
             //再开一个        } else if (ret != 0) {线程 来播放 (流畅度)
             frames.push(frame);

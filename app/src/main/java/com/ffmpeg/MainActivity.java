@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 dnPlayer.prepare();
                 break;
             case R.id.stop_btn:
+                dnPlayer.stop();
                 break;
         }
     }

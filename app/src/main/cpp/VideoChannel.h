@@ -22,6 +22,9 @@ public:
     void play();
     void render();
     void setRenderFrameCallback(RenderFrameCallback renderFrameCallback);
+
+    void stop();
+
 private:
     pthread_t pid_decode;
     pthread_t pid_render;

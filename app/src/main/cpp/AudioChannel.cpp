@@ -170,5 +170,41 @@ int AudioChannel::getPcm() {
     data_size=sample*out_samplesize*out_channels;
     //获取frame的一个相对时间
     clock = frame->pts*av_q2d(time_base);
+    releaseAVFrame(&frame);
     return data_size;
+}
+
+void AudioChannel::stop() {
+    LOG("音频停止播放");
+    isPlaying=0;
+    packets.worked();
+    frames.worked();
+    pthread_join(pid_audio_decode,0);
+    pthread_join(pid_audio_play,0);
+    //先停止2个线程，再释放相关的引用
+    if(swrContext){
+        swr_free(&swrContext);
+        swrContext=0;
+    }
+
+    //释放播放器
+    if(bqPlayerObject){
+        (*bqPlayerObject)->Destroy(bqPlayerObject);
+        bqPlayerObject=0;
+        bqPlayerInterface=0;
+        bqPlayerBufferQueueInterface=0;
+    }
+
+    //释放混音器
+    if(outputMixObject){
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject=0;
+    }
+
+    //释放引擎
+    if(engineObject){
+        (*engineObject)->Destroy(engineObject);
+        engineObject=0;
+        engineInterface=0;
+    }
 }

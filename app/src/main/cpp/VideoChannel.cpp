@@ -115,6 +115,10 @@ void VideoChannel::render() {
     }
     av_free(&dst_data[0]);
     releaseAVFrame(&frame);
+
+    isPlaying=0;
+    sws_freeContext(swsContext);
+    swsContext=0;
 }
 
 void VideoChannel::setRenderFrameCallback(RenderFrameCallback renderFrameCallback) {
@@ -123,4 +127,14 @@ void VideoChannel::setRenderFrameCallback(RenderFrameCallback renderFrameCallbac
 
 void VideoChannel::setAudioChannel(AudioChannel *audioChannel) {
     this->audioChannel=audioChannel;
+}
+
+void VideoChannel::stop() {
+    LOG("视频停止播放");
+    isPlaying=0;
+    packets.worked();
+    frames.worked();
+    pthread_join(pid_decode,0);
+    pthread_join(pid_render,0);
+
 }

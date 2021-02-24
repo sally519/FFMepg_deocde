@@ -22,6 +22,9 @@ public:
     void play();
     void _play();
     int getPcm();
+
+    void stop();
+
 public:
     uint8_t *data;
 private:

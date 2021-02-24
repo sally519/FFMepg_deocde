@@ -6,6 +6,7 @@
 #include <android/native_window_jni.h>
 #include "DNFFmpeg.h"
 #include "VideoChannel.h"
+#include "macro.h"
 
 //__VA_ARGS__代表...这个可变参数
 #define LOG(...) __android_log_print(ANDROID_LOG_ERROR,"zsq",__VA_ARGS__);
@@ -16,6 +17,7 @@ DNFFmpeg * ffmpeg =0;
 JavaVM* javaVm=0;
 ANativeWindow* window;
 pthread_mutex_t  mutex;
+JavaCallHelper * helper=0;
 
 int JNI_OnLoad(JavaVM* vm,void *r){
     javaVm=vm;
@@ -84,10 +86,10 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_ffmpeg_DNPlayer_native_1prepare(JNIEnv *env, jobject thiz, jstring data_source) {
     const char* dataSource=env->GetStringUTFChars(data_source,0);
-
     //创建播放器
     pthread_mutex_init(&mutex,0);
-    ffmpeg=new DNFFmpeg(new JavaCallHelper(javaVm,env,thiz),dataSource);
+    helper=new JavaCallHelper(javaVm,env,thiz);
+    ffmpeg=new DNFFmpeg(helper,dataSource);
     ffmpeg->setRenderDataCallback(renderCallback);
     ffmpeg->prepare();
     env->ReleaseStringChars(data_source, reinterpret_cast<const jchar *>(dataSource));
@@ -111,4 +113,25 @@ Java_com_ffmpeg_DNPlayer_native_1setSurface(JNIEnv *env, jobject thiz, jobject s
     window=ANativeWindow_fromSurface(env,surface);
     pthread_mutex_unlock(&mutex);
     LOG("设置了窗口");
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ffmpeg_DNPlayer_native_1stop(JNIEnv *env, jobject thiz) {
+    if(ffmpeg){
+        ffmpeg->stop();
+    }
+    DELETE(helper);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_ffmpeg_DNPlayer_native_1release(JNIEnv *env, jobject thiz) {
+    pthread_mutex_lock(&mutex);
+    if(window){
+        ANativeWindow_release(window);
+        window=0;
+    }
+    pthread_mutex_unlock(&mutex);
+    LOG("释放了窗口");
 }

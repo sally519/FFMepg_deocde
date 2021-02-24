@@ -23,16 +23,20 @@ class DNFFmpeg {
     void start();
     void _start();
     void setRenderDataCallback(RenderFrameCallback renderFrameCallback);
+    void stop();
+
+public:
+    pthread_t pid_prepare;
+    pthread_t pid_play;
+    pthread_t pid_stop;
+    AudioChannel * audioChannel=0;
+    VideoChannel * videoChannel=0;
+    AVFormatContext * avFormatContext;
 private:
         char * dataSource;
-        pthread_t pid_prepare;
-        pthread_t pid_play;
-        AVFormatContext * avFormatContext;
         JavaCallHelper* javaCallHelper;
-        AudioChannel * audioChannel=0;
-        VideoChannel * videoChannel=0;
         RenderFrameCallback renderFrameCallback;
-        bool isPlaying;
+        bool isPlaying=1;
 };
 
 #endif //FIEST_FFMPEG_DNFFMPEG_H

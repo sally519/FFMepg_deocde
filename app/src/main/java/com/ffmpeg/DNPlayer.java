@@ -17,6 +17,8 @@ public class DNPlayer implements SurfaceHolder.Callback {
 
     public native void native_prepare(String dataSource);
     public native void native_start();
+    public native void native_stop();
+    public native void native_release();
     public native void native_setSurface(Surface surface);
 
     public interface onFFmpegInitErrorBack{
@@ -53,20 +55,25 @@ public class DNPlayer implements SurfaceHolder.Callback {
     /**
      * 停止播放
      * */
-    public void stop(String dataSource){
+    public void stop(){
+        native_stop();
     }
 
     /**
      * 让使用者 释放播放链接
      * */
     public void release(){
-//        surfaceView.removeCallbacks(this::release);
+        holder.removeCallback(this);
+        native_release();
     }
 
     /**
      * 设置播放显示的画布
      * */
     public void setSurfaceView(SurfaceView surfaceView) {
+        if(null!=holder){
+            holder.removeCallback(this);
+        }
         this.surfaceView = surfaceView;
         holder = surfaceView.getHolder();
         holder.addCallback(this);

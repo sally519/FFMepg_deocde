@@ -26,8 +26,9 @@ public:
     int push(T value){
         pthread_mutex_lock(&mutex);
         if (isWord!=1){
-            LOG("队列存储被暂停了");
-            return 404;
+            LOG("队列存储被暂停了,未能存储的元素被即时释放了");
+            releaseCallback(&value);
+            return 1;
         }
         q.push(value);
         //通知 有了新数据到达
@@ -39,7 +40,7 @@ public:
     int pop(T& value){
         pthread_mutex_lock(&mutex);
         if (isWord!=1){
-            return 404;
+            return 0;
         }
         int ret = 0;
         while (q.size()==0){
@@ -90,12 +91,17 @@ public:
         return q.size();
     }
 
+    bool empty(){
+        return q.empty();
+    }
+
     void sync() {
         pthread_mutex_lock(&mutex);
         //同步代码块 当我们调用sync方法的时候，能够保证是在同步块中操作queue 队列
         syncHandle(q);
         pthread_mutex_unlock(&mutex);
     }
+
 private:
     pthread_mutex_t mutex;
     pthread_cond_t cond;
