@@ -252,8 +252,20 @@ void DNFFmpeg::stop() {
 
 void DNFFmpeg::pause_video() {
     this->pause= true;
+    if(audioChannel){
+        audioChannel->pause();
+    }
+    if(videoChannel){
+        videoChannel->pause();
+    }
 }
 
 void DNFFmpeg::continue_video() {
     this->pause= false;
+    if(audioChannel){
+        audioChannel->restart();
+    }
+    if(videoChannel){
+        videoChannel->restart();
+    }
 }

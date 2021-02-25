@@ -26,23 +26,22 @@ public:
     int push(T value){
         pthread_mutex_lock(&mutex);
         if (isWord!=1){
-            LOG("队列存储被暂停了,未能存储的元素被即时释放了");
             releaseCallback(&value);
-            return 1;
+            return 0;
         }
         q.push(value);
         //通知 有了新数据到达
         pthread_cond_signal(&cond);
         pthread_mutex_unlock(&mutex);
-        return 0;
+        return 1;
     }
 
     int pop(T& value){
         pthread_mutex_lock(&mutex);
-        if (isWord!=1){
-            return 0;
-        }
         int ret = 0;
+        if (isWord!=1){
+            return ret;
+        }
         while (q.size()==0){
             //如果没数据就等待
             pthread_cond_wait(&cond,&mutex);

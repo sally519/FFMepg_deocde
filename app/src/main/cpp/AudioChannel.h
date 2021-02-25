@@ -24,6 +24,9 @@ public:
     int getPcm();
 
     void stop();
+    void pause();
+
+    void restart();
 
 public:
     uint8_t *data;

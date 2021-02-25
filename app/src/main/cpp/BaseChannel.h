@@ -7,15 +7,16 @@
 
 #include "SafeQueue.h"
 extern "C"{
-    #include <libavcodec/avcodec.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/time.h>
 };
 class BaseChannel{
 public:
     BaseChannel(int id,AVCodecContext* codecContext,AVRational time_base):id(id),codecContext(codecContext),time_base(time_base){
-
+        packets.setReleaseCallback(releaseCallback);
+        frames.setReleaseCallback(releaseAVFrame);
     }
     virtual ~BaseChannel(){
-        packets.setReleaseCallback(releaseCallback);
         packets.clear();
         frames.clear();
         if(codecContext){
@@ -60,7 +61,7 @@ public:
                 break;
             }
             //取出失败
-            if (!ret) {
+            if (ret != 1) {
                 continue;
             }
             //把包丢给解码器

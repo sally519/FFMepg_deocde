@@ -22,8 +22,11 @@ public:
     void play();
     void render();
     void setRenderFrameCallback(RenderFrameCallback renderFrameCallback);
-
     void stop();
+
+    void pause();
+
+    void restart();
 
 private:
     pthread_t pid_decode;
@@ -31,6 +34,7 @@ private:
     SwsContext* swsContext=0;
     RenderFrameCallback renderFrameCallback;
     int fps;
+    bool onPause= false;
     AudioChannel * audioChannel=0;
 };
 

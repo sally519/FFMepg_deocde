@@ -59,15 +59,18 @@ void VideoChannel::render() {
             codecContext->width,codecContext->height,AV_PIX_FMT_RGBA,
             SWS_BILINEAR,0,0,0);
     //每个画面刷新的间隔
-    double frame_delays=1.0/fps*1000000;
+    double frame_delays=1.0/fps*AV_TIME_BASE;
     AVFrame * frame=0;
     uint8_t * dst_data[4];//指针数组
     int dst_lines_ize[4];
     av_image_alloc(dst_data,dst_lines_ize,codecContext->width,codecContext->height,AV_PIX_FMT_RGBA,1);
     while (isPlaying){
+        if(onPause){
+            continue;
+        }
         int ret=frames.pop(frame);
         if(ret!=1){
-
+            continue;
         }
         if(!isPlaying){
             break;
@@ -82,7 +85,7 @@ void VideoChannel::render() {
         //获得当前画面播放的相对时间,视频的话一般用best_effort_timestamp，和音频有点区别
         clock=frame->best_effort_timestamp*av_q2d(time_base);
         //额外的画面刷新间隔时间
-        double extra_delay=frame->repeat_pict/(2*fps)*1000000;
+        double extra_delay=frame->repeat_pict/(2*fps)*AV_TIME_BASE;
         //真实需要的间隔时间
         double delays=extra_delay+frame_delays;
         //通过休眠来设置帧率
@@ -97,7 +100,7 @@ void VideoChannel::render() {
                     continue;
                 }
                 //音频相对播放时间-视频相对播放时间
-                double diff_time= 1000000*(clock-audioClock);
+                double diff_time= AV_TIME_BASE*(clock-audioClock);
                 if(diff_time>0){
                     av_usleep(delays + diff_time);
                 } else{
@@ -136,5 +139,12 @@ void VideoChannel::stop() {
     frames.worked();
     pthread_join(pid_decode,0);
     pthread_join(pid_render,0);
+}
 
+void VideoChannel::pause() {
+    onPause=true;
+}
+
+void VideoChannel::restart() {
+    onPause=false;
 }

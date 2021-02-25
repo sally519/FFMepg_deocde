@@ -4,6 +4,8 @@
 
 #include "AudioChannel.h"
 
+bool onPause= false;
+
 AudioChannel::AudioChannel(int id,AVCodecContext* codecContext,AVRational time_base):BaseChannel(id,codecContext,time_base) {
     //44100*(双声道)*(16位)
     //根据布局获取声道数
@@ -21,6 +23,9 @@ AudioChannel::~AudioChannel() {
 }
 
 void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
+    if(onPause){
+        return;
+    }
     AudioChannel *audioChannel = static_cast<AudioChannel *>(context);
     //获得pcm 数据 多少个字节 data
     int dataSize = audioChannel->getPcm();
@@ -207,4 +212,12 @@ void AudioChannel::stop() {
         engineObject=0;
         engineInterface=0;
     }
+}
+
+void AudioChannel::pause() {
+    onPause= true;
+}
+
+void AudioChannel::restart() {
+    onPause= false;
 }
